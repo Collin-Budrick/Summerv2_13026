@@ -21,7 +21,7 @@ void main() {
 	vec2 texGradX = dFdx(texcoord);
 	vec2 texGradY = dFdy(texcoord);
 
-	vec4 texColor = texture(tex, texcoord);
+	vec4 texColor = textureAF(tex, texcoord);
 
 	vec4 color = texColor * glcolor;
 	bool lightning = entityIdMap == LIGHTNING_BOLT || entityIdMap == FIREWORK_ROCKET;

@@ -71,8 +71,11 @@ void main() {
 	#ifdef ANISOTROPIC_FILTERING
 		#if ANISOTROPIC_FILTERING_MODE == 0
 			texColor = textureAniso2(tex, parallaxUV, texcoord);
-		#else
+		#elif ANISOTROPIC_FILTERING_MODE == 1
 			texColor = textureAniso(tex, parallaxUV, texcoord);
+		#else
+			// Hardware anisotropic filtering (use texture LOD gradients only)
+			texColor = textureGrad(tex, parallaxUV, texGradX, texGradY);
 		#endif
 	#else
 		#ifdef PARALLAX_MAPPING

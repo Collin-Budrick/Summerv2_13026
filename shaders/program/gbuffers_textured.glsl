@@ -18,7 +18,7 @@ varying vec3 sunColor, skyColor, lightColor;
 #ifdef FSH
 
 void main() {
-	vec4 color = texture(tex, texcoord) * glcolor;
+	vec4 color = textureAF(tex, texcoord) * glcolor;
 #if MC_VERSION >= 11500
 	vec4 texColor = toLinearR(color);
 	vec2 lightmap = AdjustLightmap(lmcoord);

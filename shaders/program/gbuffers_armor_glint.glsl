@@ -13,7 +13,7 @@ varying vec4 glcolor;
 #ifdef FSH
 
 void main() {
-	vec4 color = texture(tex, texcoord) * glcolor;
+	vec4 color = textureAF(tex, texcoord) * glcolor;
 
 /* DRAWBUFFERS:045 */
 	gl_FragData[0] = vec4(color.rgb, color.a);

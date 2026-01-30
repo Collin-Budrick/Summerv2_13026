@@ -18,7 +18,7 @@ varying vec3 sunColor, skyColor;
 #ifdef FSH
 
 void main() {
-	vec4 texColor = texture(tex, texcoord) * glcolor;
+	vec4 texColor = textureAF(tex, texcoord) * glcolor;
 	texColor.a *= 0.33;
 	vec4 color = texColor;
 #if MC_VERSION >= 11500

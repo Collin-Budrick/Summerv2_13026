@@ -93,6 +93,18 @@ vec3 fastCos(vec3 x) {
     return fastSin(x + HALF_PI);
 }
 
+#ifdef FSH
+vec4 textureAF(sampler2D sam, vec2 uv) {
+    #if defined ANISOTROPIC_FILTERING && ANISOTROPIC_FILTERING_MODE == 2
+        vec2 dx = dFdx(uv);
+        vec2 dy = dFdy(uv);
+        return textureGrad(sam, uv, dx, dy);
+    #else
+        return texture(sam, uv);
+    #endif
+}
+#endif
+
 float pack2x8To16(float a, float b) {
     a = clamp(a, 0.0, 1.0);
     b = clamp(b, 0.0, 1.0);

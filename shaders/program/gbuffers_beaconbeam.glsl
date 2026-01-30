@@ -13,7 +13,7 @@ varying vec4 glcolor;
 #ifdef FSH
 
 void main() {
-	vec4 color = texture(tex, texcoord) * glcolor;
+	vec4 color = textureAF(tex, texcoord) * glcolor;
 	vec4 specularTex = vec4(0.0, 0.0, 0.0, 0.0);
 	vec4 CT4 = texture(gaux1, gl_FragCoord.xy * invViewSize);
 	vec4 CT5 = texture(gaux2, gl_FragCoord.xy * invViewSize);

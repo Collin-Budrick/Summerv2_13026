@@ -23,7 +23,7 @@ void main() {
 	vec2 texGradX = dFdx(texcoord);
 	vec2 texGradY = dFdy(texcoord);
 
-	vec4 color = texture(tex, texcoord) * glcolor;
+	vec4 color = textureAF(tex, texcoord) * glcolor;
 	
 	float parallaxShadow = 1.0;
 

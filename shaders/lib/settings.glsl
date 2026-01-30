@@ -137,7 +137,8 @@ const int noiseTextureResolution = 64;
 
 
 #define ANISOTROPIC_FILTERING
-#define ANISOTROPIC_FILTERING_MODE 0        // [0 1]
+// 0: custom fast (textureAniso2), 1: custom quality (textureAniso), 2: hardware anisotropy
+#define ANISOTROPIC_FILTERING_MODE 2        // [0 1 2]
 #define ANISOTROPIC_FILTERING_QUALITY 1.0   // [1.0 2.0 4.0 8.0 16.0]
 
 #define FSR_RCAS

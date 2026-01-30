@@ -66,7 +66,7 @@ void main() {
 
 	vec4 mcPos = vMcPos;
 
-	vec4 texColor = texture(tex, texcoord) * glcolor;
+	vec4 texColor = textureAF(tex, texcoord) * glcolor;
 	if(texColor.a < 0.5 / 255.0) discard;
 	vec4 color = vec4(BLACK, 1.0);
 
