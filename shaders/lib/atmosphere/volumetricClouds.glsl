@@ -267,11 +267,11 @@ void cloudRayMarching(vec3 startPos, vec3 worldPos, inout vec4 intScattTrans, in
 #endif
 
 vec4 temporal_cloud3D(vec4 color_c){
-    vec2 uv = texcoord * 2 - vec2(1.0, 0.0);
+    vec2 uv = (texcoord - cloudRenderOffset) / CLOUD_RENDER_SCALE;
     float z = 1.0;
     vec3 prePos = getPrePos(viewPosToWorldPos(screenPosToViewPos(vec4(uv, z, 1.0))));
 
-    prePos.xy = (prePos.xy * 0.5 + vec2(0.5, 0.0)) * viewSize - 0.5;
+    prePos.xy = (prePos.xy * CLOUD_RENDER_SCALE + cloudRenderOffset) * viewSize - 0.5;
     vec2 fPrePos = floor(prePos.xy);
 
     vec4 c_s = vec4(0.0);
@@ -280,7 +280,8 @@ vec4 temporal_cloud3D(vec4 color_c){
     for(int i = 0; i <= 1; i++){
     for(int j = 0; j <= 1; j++){
         vec2 curUV = fPrePos + vec2(i, j);
-        if(outScreen(((curUV) * invViewSize) * 2.0 - vec2(1.0, 0.0))) continue;
+        vec2 curLocal = (curUV * invViewSize - cloudRenderOffset) / CLOUD_RENDER_SCALE;
+        if(outScreen(curLocal)) continue;
 
 
         float weight = (1.0 - abs(prePos.x - curUV.x)) * (1.0 - abs(prePos.y - curUV.y));

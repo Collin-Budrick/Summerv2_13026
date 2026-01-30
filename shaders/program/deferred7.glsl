@@ -42,6 +42,25 @@ const bool shadowcolor1Mipmap = false;
 #include "/lib/atmosphere/celestial.glsl"
 // #include "/lib/atmosphere/volumetricClouds.glsl"
 
+#ifdef VOLUMETRIC_CLOUDS
+vec4 sampleCloudUpscaled(vec2 uv){
+	vec4 c0 = texture(colortex3, uv);
+	vec2 texel = invViewSize;
+	vec4 c1 = texture(colortex3, uv + vec2(texel.x, 0.0));
+	vec4 c2 = texture(colortex3, uv + vec2(0.0, texel.y));
+	vec4 c3 = texture(colortex3, uv + texel);
+
+	float edge = CLOUD_UPSAMPLE_EDGE;
+	float w1 = 1.0 - saturate(abs(c1.a - c0.a) * edge);
+	float w2 = 1.0 - saturate(abs(c2.a - c0.a) * edge);
+	float w3 = 1.0 - saturate(abs(c3.a - c0.a) * edge);
+
+	vec4 sum = c0 + c1 * w1 + c2 * w2 + c3 * w3;
+	float wsum = 1.0 + w1 + w2 + w3;
+	return sum / max(wsum, 1e-4);
+}
+#endif
+
 
 
 void main() {
@@ -200,9 +219,11 @@ void main() {
 		float cloudHitLength = clamp(intersectHorizontalPlane(camera, worldDir, 650), 0.0, 20000.0);
 
 		#ifdef VOLUMETRIC_CLOUDS
-			vec2 cloud_uv = texcoord * 0.5 + vec2(0.5, 0.0);
-			if(!outScreen(cloud_uv * 2.0 - vec2(1.0, 0.0) + vec2(-1.0, 1.0) * invViewSize) && camera.y < 5000.0)	{
-				vec4 CT1_c = texture(colortex3, cloud_uv);
+			vec2 cloud_uv = texcoord * CLOUD_RENDER_SCALE + cloudRenderOffset;
+			vec2 cloudMin = cloudRenderOffset + invViewSize * 1.5;
+			vec2 cloudMax = cloudRenderOffset + vec2(CLOUD_RENDER_SCALE) - invViewSize * 1.5;
+			if(!outScreen(cloud_uv, cloudMin, cloudMax) && camera.y < 5000.0)	{
+				vec4 CT1_c = sampleCloudUpscaled(cloud_uv);
 				if(dot(CT1_c.rgb, CT1_c.rgb) <= 1e-9){
 					CT1_c.a = 1.0;
 				}

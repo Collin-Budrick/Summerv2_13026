@@ -53,10 +53,10 @@ void main() {
 		}
 	#endif
 
-	vec2 hrrUV_c = texcoord * 2.0 - vec2(1.0, 0.0);
-	if(!outScreen(hrrUV_c)){
-		float hrrZ = texture(depthtex1, hrrUV_c).x;
-		vec4 hrrScreenPos = vec4(unTAAJitter(hrrUV_c), hrrZ, 1.0);
+	vec2 cloudLocal = (texcoord - cloudRenderOffset) / CLOUD_RENDER_SCALE;
+	if(!outScreen(cloudLocal)){
+		float hrrZ = texture(depthtex1, cloudLocal).x;
+		vec4 hrrScreenPos = vec4(unTAAJitter(cloudLocal), hrrZ, 1.0);
 		vec4 hrrViewPos = screenPosToViewPos(hrrScreenPos);
 		vec4 hrrWorldPos = viewPosToWorldPos(hrrViewPos);
 		float hrrWorldDis1 = length(hrrWorldPos.xyz);
@@ -64,7 +64,7 @@ void main() {
 		vec3 hrrWorldDir = normalize(vec3(hrrWorldPos.x, max(hrrWorldPos.y, 0.0), hrrWorldPos.z));
 
 		vec4 intScattTrans = vec4(vec3(0.0), 1.0);
-		if(isSkyHRR(texcoord * 2 - vec2(1.0, 0.0)) > 0.5 && camera.y < 5000.0) {
+		if(isSkyHRR(cloudLocal) > 0.5 && camera.y < 5000.0) {
 			float d_p2a = RaySphereIntersection(earthPos, hrrWorldDir, vec3(0.0), earth_r + atmosphere_h).y;
 			float d_p2e = RaySphereIntersection(earthPos, hrrWorldDirO, vec3(0.0), earth_r).x;
 			float d = d_p2e > 0.0 ? d_p2e : d_p2a;
