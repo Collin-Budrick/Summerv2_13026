@@ -26,6 +26,30 @@ vec4 worldPosToViewPos(vec4 worldPos){
     return gbufferModelView * worldPos;
 }
 
+float getCloudRenderScale(){
+    #ifdef CLOUD_ADAPTIVE_SCALE
+        float scaleHigh = CLOUD_RENDER_SCALE;
+        float scaleLow = CLOUD_RENDER_SCALE_LOW;
+        vec3 centerView = normalize(screenPosToViewPos(vec4(0.5, 0.5, 1.0, 1.0)).xyz);
+        float lookDown = smoothstep(CLOUD_LOOKDOWN_START, CLOUD_LOOKDOWN_END, -centerView.y);
+        float scale = mix(scaleHigh, scaleLow, lookDown);
+
+        vec3 upViewDir = normalize((gbufferModelView * vec4(upWorldDir, 0.0)).xyz);
+        if(upViewDir.z < -0.01){
+            vec4 upViewPos = vec4(upViewDir * CLOUD_OVERHEAD_CHECK_DIST, 1.0);
+            vec2 upUv = viewPosToScreenPos(upViewPos).xy;
+            if(!outScreen(upUv)){
+                float depth = texture(depthtex1, upUv).r;
+                float upZ = viewPosToScreenPos(upViewPos).z;
+                float blocked = step(depth, upZ - CLOUD_OVERHEAD_BIAS);
+                scale = mix(scale, scaleHigh, blocked);
+            }
+        }
+        return scale;
+    #else
+        return CLOUD_RENDER_SCALE;
+    #endif
+}
 
 
 vec2 shadowDistort(vec2 sNDCPos){

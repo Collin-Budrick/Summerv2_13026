@@ -219,9 +219,11 @@ void main() {
 		float cloudHitLength = clamp(intersectHorizontalPlane(camera, worldDir, 650), 0.0, 20000.0);
 
 		#ifdef VOLUMETRIC_CLOUDS
-			vec2 cloud_uv = texcoord * CLOUD_RENDER_SCALE + cloudRenderOffset;
-			vec2 cloudMin = cloudRenderOffset + invViewSize * 1.5;
-			vec2 cloudMax = cloudRenderOffset + vec2(CLOUD_RENDER_SCALE) - invViewSize * 1.5;
+			float cloudScale = getCloudRenderScale();
+			vec2 cloudOffset = vec2(1.0 - cloudScale, 0.0);
+			vec2 cloud_uv = texcoord * cloudScale + cloudOffset;
+			vec2 cloudMin = cloudOffset + invViewSize * 1.5;
+			vec2 cloudMax = cloudOffset + vec2(cloudScale) - invViewSize * 1.5;
 			if(!outScreen(cloud_uv, cloudMin, cloudMax) && camera.y < 5000.0)	{
 				vec4 CT1_c = sampleCloudUpscaled(cloud_uv);
 				if(dot(CT1_c.rgb, CT1_c.rgb) <= 1e-9){

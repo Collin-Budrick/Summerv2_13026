@@ -53,7 +53,9 @@ void main() {
 		}
 	#endif
 
-	vec2 cloudLocal = (texcoord - cloudRenderOffset) / CLOUD_RENDER_SCALE;
+	float cloudScale = getCloudRenderScale();
+	vec2 cloudOffset = vec2(1.0 - cloudScale, 0.0);
+	vec2 cloudLocal = (texcoord - cloudOffset) / cloudScale;
 	if(!outScreen(cloudLocal)){
 		float hrrZ = texture(depthtex1, cloudLocal).x;
 		vec4 hrrScreenPos = vec4(unTAAJitter(cloudLocal), hrrZ, 1.0);
