@@ -116,6 +116,8 @@ void main() {
 		vec4 gi = vec4(rsm, ao);
 		#if defined RSM_ENABLED || defined AO_ENABLED
 			gi = temporal_RSM(gi);
+			gi.rgb += computeSkyGI(hrrUV, hrrZ, hrrNormalW);
+			gi.rgb = applyDirectionalCache(hrrUV, hrrZ, hrrWorldPos, hrrNormalW, gi.rgb);
 			gi = max(vec4(0.0), gi);
 			// CT1 = gi;
 			CT3 = gi;

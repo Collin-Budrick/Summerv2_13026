@@ -411,6 +411,19 @@ float shadowMapScale = (120.0 / shadowDistance) * (shadowMapResolution / 2048.0)
 #define RSM_OVERHEAD_CHECK_DIST 64.0 // [16.0 32.0 48.0 64.0 80.0 96.0 128.0]
 #define RSM_OVERHEAD_BIAS 0.0005     // [0.0 0.00025 0.0005 0.001 0.002]
 
+#define GI_SKY_INJECT
+#define GI_SKY_STRENGTH 0.35     // [0.1 0.2 0.35 0.5 0.75 1.0]
+#define GI_SKY_RADIUS 2.0        // [1.0 2.0 3.0 4.0]
+#define GI_SKY_DEPTH_TH 1.5      // [0.5 1.0 1.5 2.0 3.0]
+
+#define GI_DIR_CACHE
+#define GI_CACHE_TILE_SIZE 12.0  // [6.0 8.0 10.0 12.0 16.0 20.0]
+#define GI_CACHE_STRENGTH 0.35   // [0.1 0.2 0.35 0.5 0.75 1.0]
+#define GI_CACHE_HISTORY 0.2     // [0.1 0.2 0.3 0.4 0.5]
+#define GI_CACHE_CLAMP 0.6       // [0.3 0.45 0.6 0.75 1.0]
+#define GI_CACHE_DEPTH_TH 1.5    // [0.5 1.0 1.5 2.0 3.0]
+#define GI_TEMPORAL_CLAMP 0.6    // [0.3 0.45 0.6 0.75 1.0]
+
 
 #define DENOISER_RADIUS 12.0     // [2.0 4.0 6.0 8.0 10.0 12.0 14.0 16.0 18.0 20.0]
 #define DENOISER_QUALITY 12.0    // [2.0 4.0 6.0 8.0 10.0 12.0 14.0 16.0 18.0 20.0]

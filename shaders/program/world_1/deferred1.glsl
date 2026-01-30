@@ -3,7 +3,7 @@ varying vec2 texcoord;
 varying vec3 sunWorldDir, moonWorldDir, lightWorldDir;
 varying vec3 sunViewDir, moonViewDir, lightViewDir;
 
-// varying vec3 sunColor, skyColor;
+varying vec3 skyColor;
 // varying vec3 zenithColor, horizonColor;
 
 varying float isNoon, isNight, sunRiseSet;
@@ -55,6 +55,8 @@ void main() {
 		vec4 gi = vec4(rsm, ao);
 		#if defined RSM_ENABLED || defined AO_ENABLED
 			gi = temporal_RSM(gi);
+			gi.rgb += computeSkyGI(hrrUV, hrrZ, hrrNormalW);
+			gi.rgb = applyDirectionalCache(hrrUV, hrrZ, hrrWorldPos, hrrNormalW, gi.rgb);
 			gi = max(vec4(0.0), gi);
 			CT1 = gi;
 			CT3 = gi;
@@ -102,11 +104,7 @@ void main() {
 	isNight = saturate(dot(moonWorldDir, upWorldDir) * NIGHT_DURATION);
 	sunRiseSet = saturate(1 - isNoon - isNight);
 
-	// sunColor = isNoon * TransmittanceToAtmosphere(earthPos, sunWorldDir) * IncomingLight;
-	// sunColor += isNight * TransmittanceToAtmosphere(earthPos, moonWorldDir) * IncomingLight_N;
-	// sunColor *= 1.0 - 0.75 * rainStrength;
-	// skyColor = GetMultiScattering(getHeigth(earthPos), upWorldDir, sunWorldDir) * IncomingLight * 3;
-	// skyColor += GetMultiScattering(getHeigth(earthPos), upWorldDir, moonWorldDir) * IncomingLight_N * 3;
+	skyColor = getSkyColor();
 
 	float d1 = RaySphereIntersection(earthPos, upWorldDir, vec3(0.0), earth_r + atmosphere_h).y;
 	

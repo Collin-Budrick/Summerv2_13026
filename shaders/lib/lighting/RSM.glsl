@@ -204,9 +204,107 @@ vec4 temporal_RSM(vec4 color_c){
     }
 
     vec4 blend = vec4(0.95, 0.95, 0.95, 0.9);
+    if (w_s > 1e-4) {
+        vec3 preColor = c_s.rgb / w_s;
+        float lumCur = getLuminance(color_c.rgb);
+        float lumPre = getLuminance(preColor);
+        float clampRange = max(0.05, lumCur * GI_TEMPORAL_CLAMP);
+        float clampMask = step(clampRange, abs(lumPre - lumCur));
+        preColor = mix(preColor, color_c.rgb, clampMask);
+        c_s.rgb = preColor * w_s;
+    }
     color_c = mix(color_c, c_s, w_s * blend);
 
     return color_c;
+}
+
+vec3 computeSkyGI(vec2 uv, float depth, vec3 normalW){
+    #ifdef GI_SKY_INJECT
+        if(depth >= 1.0) return vec3(0.0);
+        float nUp = saturate(dot(normalW, upWorldDir));
+        float depthLin = linearizeDepth(depth);
+        vec2 stepUv = GI_SKY_RADIUS * invViewSize;
+
+        float open = 0.0;
+        vec2 su = uv + vec2(stepUv.x, 0.0);
+        if (outScreen(su)) open += 1.0;
+        else {
+            float sd = texture(depthtex1, su).r;
+            if (sd >= 1.0 || linearizeDepth(sd) > depthLin + GI_SKY_DEPTH_TH) open += 1.0;
+        }
+        su = uv - vec2(stepUv.x, 0.0);
+        if (outScreen(su)) open += 1.0;
+        else {
+            float sd = texture(depthtex1, su).r;
+            if (sd >= 1.0 || linearizeDepth(sd) > depthLin + GI_SKY_DEPTH_TH) open += 1.0;
+        }
+        su = uv + vec2(0.0, stepUv.y);
+        if (outScreen(su)) open += 1.0;
+        else {
+            float sd = texture(depthtex1, su).r;
+            if (sd >= 1.0 || linearizeDepth(sd) > depthLin + GI_SKY_DEPTH_TH) open += 1.0;
+        }
+        su = uv - vec2(0.0, stepUv.y);
+        if (outScreen(su)) open += 1.0;
+        else {
+            float sd = texture(depthtex1, su).r;
+            if (sd >= 1.0 || linearizeDepth(sd) > depthLin + GI_SKY_DEPTH_TH) open += 1.0;
+        }
+        float skyVis = open * 0.25;
+        return skyColor * GI_SKY_STRENGTH * skyVis * nUp;
+    #else
+        return vec3(0.0);
+    #endif
+}
+
+vec3 applyDirectionalCache(vec2 uv, float depth, vec4 worldPos, vec3 normalW, vec3 giCur){
+    #ifdef GI_DIR_CACHE
+        float tile = max(1.0, GI_CACHE_TILE_SIZE);
+        vec2 tileUv = (floor(uv * viewSize / tile) + 0.5) * tile * invViewSize;
+        vec2 tileStep = tile * invViewSize;
+
+        vec3 c0 = texture(colortex1, tileUv).rgb;
+        vec3 cE = texture(colortex1, tileUv + vec2(tileStep.x, 0.0)).rgb;
+        vec3 cW = texture(colortex1, tileUv - vec2(tileStep.x, 0.0)).rgb;
+        vec3 cN = texture(colortex1, tileUv + vec2(0.0, tileStep.y)).rgb;
+        vec3 cS = texture(colortex1, tileUv - vec2(0.0, tileStep.y)).rgb;
+
+        vec3 normalV = normalize((gbufferModelView * vec4(normalW, 0.0)).xyz);
+        float wE = max(normalV.x, 0.0);
+        float wW = max(-normalV.x, 0.0);
+        float wN = max(normalV.y, 0.0);
+        float wS = max(-normalV.y, 0.0);
+        float wC = 0.5;
+        float wSum = wC + wE + wW + wN + wS;
+        vec3 cacheCur = (c0 * wC + cE * wE + cW * wW + cN * wN + cS * wS) / max(1e-4, wSum);
+
+        vec3 cache = cacheCur;
+        vec2 preUv = getPrePos(worldPos).xy;
+        if (!outScreen(preUv)) {
+            float preDepth = texture(depthtex1, preUv).r;
+            float depthLin = linearizeDepth(depth);
+            float preDepthLin = linearizeDepth(preDepth);
+            float depthDiff = abs(preDepthLin - depthLin);
+            float valid = depthDiff < GI_CACHE_DEPTH_TH ? 1.0 : 0.0;
+            vec2 preTileUv = (floor(preUv * viewSize / tile) + 0.5) * tile * invViewSize;
+            vec3 cachePrev = texture(colortex1, preTileUv).rgb;
+
+            float lumCur = getLuminance(giCur);
+            float lumPrev = getLuminance(cachePrev);
+            float clampRange = max(0.05, lumCur * GI_CACHE_CLAMP);
+            float clampMask = step(clampRange, abs(lumPrev - lumCur));
+            cachePrev = mix(cachePrev, giCur, clampMask);
+
+            vec3 cacheMix = mix(cachePrev, cacheCur, GI_CACHE_HISTORY);
+            cache = mix(cacheCur, cacheMix, valid);
+        }
+
+        float giConf = saturate(length(giCur) * 0.5);
+        float mixW = GI_CACHE_STRENGTH * (1.0 - giConf);
+        return mix(giCur, cache, mixW);
+    #else
+        return giCur;
+    #endif
 }
 
 vec4 JointBilateralFiltering_RSM_Horizontal(){
