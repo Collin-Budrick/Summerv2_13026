@@ -292,6 +292,14 @@ const float fog_startHeight = 0.0;
 
 #define VOLUMETRIC_FOG
 
+#define FOG_ADAPTIVE_SAMPLES
+#define FOG_SAMPLE_SCALE 1.0         // [0.5 0.75 1.0]
+#define FOG_SAMPLE_SCALE_LOW 0.5     // [0.25 0.5 0.75]
+#define FOG_LOOKDOWN_START 0.2       // [0.0 0.1 0.2 0.3 0.4]
+#define FOG_LOOKDOWN_END 0.6         // [0.3 0.4 0.5 0.6 0.7 0.8]
+#define FOG_OVERHEAD_CHECK_DIST 64.0 // [16.0 32.0 48.0 64.0 80.0 96.0 128.0]
+#define FOG_OVERHEAD_BIAS 0.0005     // [0.0 0.00025 0.0005 0.001 0.002]
+
 #define FOG_NEAR_UNIT 30.0    // [5.0 10.0 15.0 20.0 25.0 30.0 35.0 40.0 45.0 50.0]
 #define FOG_FAR_UNIT 120.0    // [30.0 60.0 90.0 120.0 150.0 180.0 210.0 240.0]
 

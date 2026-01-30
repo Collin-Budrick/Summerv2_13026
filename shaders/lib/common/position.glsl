@@ -51,6 +51,31 @@ float getCloudRenderScale(){
     #endif
 }
 
+float getFogSampleScale(){
+    #ifdef FOG_ADAPTIVE_SAMPLES
+        float scaleHigh = FOG_SAMPLE_SCALE;
+        float scaleLow = FOG_SAMPLE_SCALE_LOW;
+        vec3 centerView = normalize(screenPosToViewPos(vec4(0.5, 0.5, 1.0, 1.0)).xyz);
+        float lookDown = smoothstep(FOG_LOOKDOWN_START, FOG_LOOKDOWN_END, -centerView.y);
+        float scale = mix(scaleHigh, scaleLow, lookDown);
+
+        vec3 upViewDir = normalize((gbufferModelView * vec4(upWorldDir, 0.0)).xyz);
+        if(upViewDir.z < -0.01){
+            vec4 upViewPos = vec4(upViewDir * FOG_OVERHEAD_CHECK_DIST, 1.0);
+            vec2 upUv = viewPosToScreenPos(upViewPos).xy;
+            if(!outScreen(upUv)){
+                float depth = texture(depthtex1, upUv).r;
+                float upZ = viewPosToScreenPos(upViewPos).z;
+                float blocked = step(depth, upZ - FOG_OVERHEAD_BIAS);
+                scale = mix(scale, scaleHigh, blocked);
+            }
+        }
+        return scale;
+    #else
+        return FOG_SAMPLE_SCALE;
+    #endif
+}
+
 
 vec2 shadowDistort(vec2 sNDCPos){
     float sDist = length(sNDCPos.xy);
