@@ -341,8 +341,9 @@ float shadowMapping(vec4 worldPos, vec3 normal, float sssWrap, float packedIn, o
     vec2 baseOffset = baseDir * (baseRadius / shadowMapResolution);
     float shade = 0.0;
     float count = 0.0;
-    vec2 offsetX = vec2(0.5 / shadowMapResolution, 0.0);
-    vec2 offsetY = vec2(0.0, 0.5 / shadowMapResolution);
+    float tapRadius = max(0.75, baseRadius * 0.5);
+    vec2 offsetX = vec2(tapRadius / shadowMapResolution, 0.0);
+    vec2 offsetY = vec2(0.0, tapRadius / shadowMapResolution);
 
     vec2 uv0 = shadowPos.xy + baseOffset;
     shade += textureLod(shadowtex0, vec3(uv0, shadowPos.z), 0.0).r;
@@ -354,13 +355,22 @@ float shadowMapping(vec4 worldPos, vec3 normal, float sssWrap, float packedIn, o
     shade += textureLod(shadowtex0, vec3(uv2, shadowPos.z), 0.0).r;
     count += 2.0;
 
-    if(shadowWN <= 0.6){
-        vec2 uv3 = shadowPos.xy + baseOffset + offsetY;
-        vec2 uv4 = shadowPos.xy + baseOffset - offsetY;
-        shade += textureLod(shadowtex0, vec3(uv3, shadowPos.z), 0.0).r;
-        shade += textureLod(shadowtex0, vec3(uv4, shadowPos.z), 0.0).r;
-        count += 2.0;
-    }
+    vec2 uv3 = shadowPos.xy + baseOffset + offsetY;
+    vec2 uv4 = shadowPos.xy + baseOffset - offsetY;
+    shade += textureLod(shadowtex0, vec3(uv3, shadowPos.z), 0.0).r;
+    shade += textureLod(shadowtex0, vec3(uv4, shadowPos.z), 0.0).r;
+    count += 2.0;
+
+    vec2 uv5 = shadowPos.xy + baseOffset + (offsetX + offsetY);
+    vec2 uv6 = shadowPos.xy + baseOffset + (offsetX - offsetY);
+    vec2 uv7 = shadowPos.xy + baseOffset + (-offsetX + offsetY);
+    vec2 uv8 = shadowPos.xy + baseOffset + (-offsetX - offsetY);
+    shade += textureLod(shadowtex0, vec3(uv5, shadowPos.z), 0.0).r;
+    shade += textureLod(shadowtex0, vec3(uv6, shadowPos.z), 0.0).r;
+    shade += textureLod(shadowtex0, vec3(uv7, shadowPos.z), 0.0).r;
+    shade += textureLod(shadowtex0, vec3(uv8, shadowPos.z), 0.0).r;
+    count += 4.0;
+
     shade /= max(count, 1.0);
 
     return saturate(shade);
