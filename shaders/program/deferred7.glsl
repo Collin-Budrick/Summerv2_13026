@@ -36,6 +36,7 @@ const bool shadowcolor1Mipmap = false;
 #include "/lib/lighting/screenSpaceShadow.glsl"
 #include "/lib/lighting/RSM.glsl"
 #include "/lib/lighting/SSAO.glsl"
+#include "/lib/lighting/localLightShadow.glsl"
 #include "/lib/surface/PBR.glsl"
 
 #include "/lib/atmosphere/fog.glsl"
@@ -180,6 +181,7 @@ void main() {
 
 		vec3 artificial = lightmap.x * artificial_color * (1. + GLOWING_BRIGHTNESS * glowingB) * diffuse;
 		artificial += saturate(materialParams.emissiveness - lightmap.x) * diffuse * EMISSIVENESS_BRIGHTNESS;
+		artificial *= localLightShadow(viewPos1.xyz, normalV, lightmap.x);
 		
 		if(lightningBolt > 0.5) color.rgb = vec3(1.0, 0.0, 0.0);
 		// artificial += 1 * lightningBolt;

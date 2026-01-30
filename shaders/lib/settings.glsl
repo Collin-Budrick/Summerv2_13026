@@ -426,6 +426,15 @@ float shadowMapScale = (120.0 / shadowDistance) * (shadowMapResolution / 2048.0)
 #define GI_CACHE_DEPTH_TH 1.5    // [0.5 1.0 1.5 2.0 3.0]
 #define GI_TEMPORAL_CLAMP 0.6    // [0.3 0.45 0.6 0.75 1.0]
 
+#define LOCAL_LIGHT_SHADOWS
+#define LOCAL_LIGHT_THRESHOLD 0.7     // [0.5 0.6 0.7 0.8 0.9]
+#define LOCAL_LIGHT_TILE_SIZE 12.0    // [8.0 10.0 12.0 16.0]
+#define LOCAL_LIGHT_HISTORY 0.2       // [0.1 0.2 0.3 0.4 0.5]
+#define LOCAL_LIGHT_DECAY 0.1         // [0.05 0.1 0.2 0.3]
+#define LOCAL_LIGHT_SHADOW_STEPS 6    // [3 4 5 6 8 10 12]
+#define LOCAL_LIGHT_SHADOW_BIAS 0.002 // [0.001 0.002 0.003 0.004 0.005]
+#define LOCAL_LIGHT_MAX_DIST 12.0     // [8.0 10.0 12.0 16.0 20.0]
+
 
 #define DENOISER_RADIUS 12.0     // [2.0 4.0 6.0 8.0 10.0 12.0 14.0 16.0 18.0 20.0]
 #define DENOISER_QUALITY 12.0    // [2.0 4.0 6.0 8.0 10.0 12.0 14.0 16.0 18.0 20.0]

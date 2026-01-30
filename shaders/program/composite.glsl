@@ -16,6 +16,7 @@ const int colortex6Format = RG32F;
 const int colortex7Format = RGBA16F;
 const int colortex8Format = RGBA16F;
 const int colortex9Format = RG16F;
+const int colortex10Format = RGBA16F;
 
 const int shadowcolor0Format = RGBA16F;
 const int shadowcolor1Format = RGBA8;
@@ -24,6 +25,7 @@ const bool colortex2Clear = false;
 const bool colortex3Clear = false;
 const bool colortex6Clear = false;
 const bool colortex7Clear = false;
+const bool colortex10Clear = false;
 
 /*
 0: rgb:color
