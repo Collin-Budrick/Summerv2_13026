@@ -251,6 +251,17 @@ vec3 computeSkyGI(vec2 uv, float depth, vec3 normalW){
             if (sd >= 1.0 || linearizeDepth(sd) > depthLin + GI_SKY_DEPTH_TH) open += 1.0;
         }
         float skyVis = open * 0.25;
+        #ifdef GI_SKY_SHADOW
+            vec4 screenPos = vec4(unTAAJitter(uv), depth, 1.0);
+            vec4 viewPos = screenPosToViewPos(screenPos);
+            vec4 worldPos = viewPosToWorldPos(viewPos);
+            vec3 shadowPos = getShadowPos(worldPos).xyz;
+            if (!outScreen(shadowPos)) {
+                float smDepth = texture(shadowtex1, shadowPos.xy).r;
+                float occluded = smDepth + GI_SKY_SHADOW_BIAS < shadowPos.z ? 1.0 : 0.0;
+                skyVis *= (1.0 - occluded);
+            }
+        #endif
         return skyColor * GI_SKY_STRENGTH * skyVis * nUp;
     #else
         return vec3(0.0);
