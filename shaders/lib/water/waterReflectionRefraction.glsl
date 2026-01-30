@@ -244,7 +244,9 @@ vec3 temporal_Reflection_Reservoir(vec3 color_c, int samples, float r, out float
 
         c_s += texelFetch(colortex3, ivec2(curUV), 0) * weight;
         w_s += weight;
-        w_w += texelFetch(colortex2, ivec2(curUV), 0).a * weight;
+        float packedVal = texelFetch(colortex2, ivec2(curUV), 0).a;
+        float reflWeightN = unpackShadowReflData(packedVal).z;
+        w_w += reflWeightN * PBR_REFLECTION_RESERVOIR_MAX * weight;
     }
     }
 

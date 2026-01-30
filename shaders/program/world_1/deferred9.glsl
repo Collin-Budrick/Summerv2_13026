@@ -86,7 +86,11 @@ void main() {
 		CT3.rgb = max(vec3(0.0), CT3.rgb);
 
 		#ifdef PBR_REFLECTION_RESERVOIR
-			CT2.a = updateReservoir ? reservoirWeight : 0.0;
+			vec3 packedData = unpackShadowReflData(CT2.a);
+			float reflN = updateReservoir ? clamp(reservoirWeight / PBR_REFLECTION_RESERVOIR_MAX, 0.0, 1.0) : packedData.z;
+			if(ivec2(gl_FragCoord.xy) != averageLumUV){
+				CT2.a = packShadowReflData(vec3(packedData.x, packedData.y, reflN));
+			}
 		#endif
 	}
 #endif

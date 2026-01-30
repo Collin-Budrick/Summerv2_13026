@@ -30,6 +30,9 @@ const bool shadowcolor1Mipmap = false;
 
 
 void main() {
+	#ifdef SHADOW_RESERVOIR
+		vec4 CT2 = texelFetch(colortex2, ivec2(gl_FragCoord.xy), 0);
+	#endif
 	#if defined DISTANT_HORIZONS && !defined NETHER && !defined END
 		bool isTerrain = skyB < 0.5;
 
@@ -72,9 +75,19 @@ void main() {
 
 		float shadow = 1.0;
 		float RTShadow = 1.0;
+		#ifdef SHADOW_RESERVOIR
+			float packedShadow = CT2.a;
+		#endif
 		
 		if(!outScreen(shadowPos.xy) && cos_theta > 0.001){
-			shadow = min(parallaxShadow, shadowMapping(worldPos1, normalW, sssWrap));
+			#ifdef SHADOW_RESERVOIR
+				shadow = min(parallaxShadow, shadowMapping(worldPos1, normalW, sssWrap, CT2.a, packedShadow));
+				if(ivec2(gl_FragCoord.xy) != averageLumUV){
+					CT2.a = packedShadow;
+				}
+			#else
+				shadow = min(parallaxShadow, shadowMapping(worldPos1, normalW, sssWrap));
+			#endif
 			shadow = mix(1.0, shadow, remapSaturate(worldDis1, shadowDistance * 0.9, shadowDistance, 1.0, 0.0));
 			shadow = max(shadow, 0.0);
 		}
@@ -87,8 +100,14 @@ void main() {
 	}
 
 
+#ifdef SHADOW_RESERVOIR
+/* DRAWBUFFERS:42 */
+	gl_FragData[0] = CT4;
+	gl_FragData[1] = CT2;
+#else
 /* DRAWBUFFERS:4 */
 	gl_FragData[0] = CT4;
+#endif
 }
 
 #endif

@@ -123,11 +123,28 @@ float pack2x8To16(vec2 v) {
     return float(Packed) / 65535.0;
 }
 
-vec2 unpack16To2x8(float Packed) {
-    int p = int(Packed * 65535.0);
+vec2 unpack16To2x8(float packedVal) {
+    int p = int(packedVal * 65535.0);
     int a = (p >> 8) & 255;
     int b = p & 255;
     return vec2(float(a) / 255.0, float(b) / 255.0);
+}
+
+vec3 unpackShadowReflData(float packedVal) {
+    float p = floor(clamp(packedVal, 0.0, 1.0) * 65535.0 + 0.5);
+    float angleBits = floor(p / 1024.0);
+    float rem = p - angleBits * 1024.0;
+    float shadowBits = floor(rem / 32.0);
+    float reflBits = rem - shadowBits * 32.0;
+    return vec3(angleBits / 63.0, shadowBits / 31.0, reflBits / 31.0);
+}
+
+float packShadowReflData(vec3 v) {
+    float angleBits = floor(clamp(v.x, 0.0, 1.0) * 63.0 + 0.5);
+    float shadowBits = floor(clamp(v.y, 0.0, 1.0) * 31.0 + 0.5);
+    float reflBits = floor(clamp(v.z, 0.0, 1.0) * 31.0 + 0.5);
+    float packedVal = angleBits * 1024.0 + shadowBits * 32.0 + reflBits;
+    return packedVal / 65535.0;
 }
 
 vec2 pack4x8To2x16(vec4 abcd) {
@@ -138,8 +155,8 @@ vec2 pack4x8To2x16(vec4 abcd) {
     return vec2(float(combined1) / 65535.0, float(combined2) / 65535.0);
 }
 
-vec4 unpack2x16To4x8(vec2 Packed) {
-    ivec2 combined = ivec2(Packed * 65535.0);
+vec4 unpack2x16To4x8(vec2 packedVal) {
+    ivec2 combined = ivec2(packedVal * 65535.0);
     ivec4 unpacked;
     unpacked.x = (combined.x >> 8) & 0xFF;
     unpacked.y = combined.x & 0xFF;

@@ -104,6 +104,18 @@ const int noiseTextureResolution = 64;
 #define PBR_REFLECTION_RESERVOIR
 #define PBR_REFLECTION_RESERVOIR_MAX 32.0 // [8.0 16.0 32.0 64.0 96.0]
 // #define PBR_REFLECTION_BLUR
+
+// Spatiotemporal shadow reservoir (stable soft shadows)
+#define SHADOW_RESERVOIR
+#define SHADOW_RESERVOIR_CANDIDATES 4      // [2 3 4 5 6]
+#define SHADOW_RESERVOIR_BLOCKER_SAMPLES 4 // [2 3 4 5 6]
+#define SHADOW_RESERVOIR_MAX 48.0          // [8.0 16.0 24.0 32.0 48.0 64.0]
+#define SHADOW_RESERVOIR_HISTORY 0.9       // [0.0 0.25 0.5 0.7 0.85 0.9 0.95]
+#define SHADOW_RESERVOIR_DEPTH_TH 0.03     // [0.005 0.01 0.02 0.03 0.05 0.08]
+#define SHADOW_RESERVOIR_NORMAL_TH 0.8     // [0.6 0.7 0.8 0.85 0.9 0.95]
+#define SHADOW_ANGULAR_RADIUS 0.007        // [0.003 0.005 0.007 0.01 0.015 0.02]
+#define SHADOW_PENUMBRA_MAX 4.0            // [1.0 2.0 3.0 4.0 6.0 8.0]
+#define SHADOW_RESERVOIR_SPATIAL
 #define TRANSLUCENT_ROUGHNESS 0.75  // [0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95]
 #define TRANSLUCENT_F0 0.75         // [0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95]
 // #define TRANSLUCENT_USE_REASOURCESPACK_PBR
