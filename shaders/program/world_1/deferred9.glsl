@@ -26,12 +26,17 @@ const bool shadowcolor1Mipmap = false;
 #include "/lib/surface/PBR.glsl"
 
 void main() {
+	vec4 CT2 = texelFetch(colortex2, ivec2(gl_FragCoord.xy), 0);
 	vec4 CT3 = texelFetch(colortex3, ivec2(gl_FragCoord.xy), 0);
 	
 #ifdef PBR_REFLECTIVITY
 	vec2 hrrUV = texcoord * 2.0 - 1.0;
 	vec3 reflectColor = BLACK;
 	if(!outScreen(hrrUV)){
+		#ifdef PBR_REFLECTION_RESERVOIR
+			float reservoirWeight = 0.0;
+			bool updateReservoir = false;
+		#endif
 		vec4 hrrSpecularMap = unpack2x16To4x8(texelFetch(colortex4, ivec2(gl_FragCoord.xy * 2 - viewSize), 0).ba);
 		MaterialParams params = MapMaterialParams(hrrSpecularMap);
 		if(hrrSpecularMap.r > 0.5 / 255.0){
@@ -68,17 +73,27 @@ void main() {
 			}
 
 			reflectColor = accumulatedReflectColor / float(reflectionSamples);
-			reflectColor = temporal_Reflection(reflectColor, reflectionSamples, r);
+			#ifdef PBR_REFLECTION_RESERVOIR
+				reflectColor = temporal_Reflection_Reservoir(reflectColor, reflectionSamples, r, reservoirWeight);
+				updateReservoir = true;
+			#else
+				reflectColor = temporal_Reflection(reflectColor, reflectionSamples, r);
+			#endif
 			
 			CT3.rgb = reflectColor;
 		}	
 
 		CT3.rgb = max(vec3(0.0), CT3.rgb);
+
+		#ifdef PBR_REFLECTION_RESERVOIR
+			CT2.a = updateReservoir ? reservoirWeight : 0.0;
+		#endif
 	}
 #endif
 
-/* DRAWBUFFERS:3 */
-	gl_FragData[0] = CT3;
+/* DRAWBUFFERS:23 */
+	gl_FragData[0] = CT2;
+	gl_FragData[1] = CT3;
 }
 
 #endif

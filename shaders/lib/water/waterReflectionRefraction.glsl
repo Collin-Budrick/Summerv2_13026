@@ -197,6 +197,74 @@ vec3 reflection(sampler2D tex, vec3 viewPos, vec3 reflectWorldDir, vec3 reflectV
 }
 
 #ifndef GBF
+#ifdef PBR_REFLECTION_RESERVOIR
+vec3 temporal_Reflection_Reservoir(vec3 color_c, int samples, float r, out float outWeight){
+    vec2 uv = texcoord * 2 - 1.0;
+    float z = texture(depthtex1, uv).r;
+    vec4 screenPos = vec4(uv, z, 1.0);
+    vec4 viewPos = screenPosToViewPos(screenPos);
+    vec4 worldPos = viewPosToWorldPos(viewPos);
+    vec3 prePos = getPrePos(worldPos);
+
+    prePos.xy = (prePos.xy * 0.5 + 0.5) * viewSize - vec2(0.5);
+    vec2 fPrePos = floor(prePos.xy);
+
+    vec4 c_s = vec4(0.0);
+    float w_s = 0.0;
+    float w_w = 0.0;
+
+    vec4 cur = texelFetch(colortex6, ivec2(gl_FragCoord.xy - 0.5 * viewSize), 0);
+    vec3 normal_c = unpackNormal(cur.r);
+    float depth_c = linearizeDepth(prePos.z);
+    float fDepth = fwidth(depth_c);
+
+    float blur = 0.0;
+    #ifndef PBR_REFLECTION_BLUR
+        blur = 1.0;
+    #endif
+
+    float cameraDisplacementWeight = clamp(1.2 - length(cameraPosition - previousCameraPosition) * 20.0 / depth_c, 0.5, 1.0);
+    float rWeight = remapSaturate(r, 0.0, 0.1, 0.9, 1.0);
+    float sampleWeight = exp2(-float(samples - 1) * 0.05);
+    float commonWeight = cameraDisplacementWeight * rWeight * sampleWeight;
+
+    for(int i = 0; i <= 1; i++){
+    for(int j = 0; j <= 1; j++){
+        vec2 curUV = fPrePos + vec2(i, j);
+        if(outScreen((curUV * invViewSize) * 2.0 - 1.0)) continue;
+
+        vec4 pre = texelFetch(colortex6, ivec2(curUV), 0);
+
+        float depth_p = linearizeDepth(pre.g);
+
+        float weight = (1.0 - abs(prePos.x - curUV.x)) * (1.0 - abs(prePos.y - curUV.y));
+
+        weight *= saturate(mix(1.0, dot(unpackNormal(pre.r), normal_c), 1.0));
+        weight *= exp(-abs(depth_p - depth_c) / (1.0 + fDepth * 2.0 + depth_p / 2.0));
+
+        c_s += texelFetch(colortex3, ivec2(curUV), 0) * weight;
+        w_s += weight;
+        w_w += texelFetch(colortex2, ivec2(curUV), 0).a * weight;
+    }
+    }
+
+    float historyConfidence = saturate(w_s * 0.95 * commonWeight);
+    float prevW = w_s > 0.0 ? (w_w / w_s) : 0.0;
+    prevW = clamp(prevW, 0.0, PBR_REFLECTION_RESERVOIR_MAX);
+
+    float curW = max(1.0, float(samples));
+    float prevAdj = prevW * historyConfidence;
+    float totalW = min(prevAdj + curW, PBR_REFLECTION_RESERVOIR_MAX);
+
+    vec3 historyColor = w_s > 0.0 ? (c_s.rgb / max(w_s, 1e-4)) : color_c;
+    float blend = totalW > 0.0 ? (prevAdj / totalW) : 0.0;
+
+    color_c = mix(color_c, historyColor, blend);
+    outWeight = totalW;
+    return color_c;
+}
+#endif
+
 vec3 temporal_Reflection(vec3 color_c, int samples, float r){
     vec2 uv = texcoord * 2 - 1.0;
     float z = texture(depthtex1, uv).r;
