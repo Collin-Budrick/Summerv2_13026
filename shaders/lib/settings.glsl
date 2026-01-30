@@ -388,6 +388,13 @@ float shadowMapScale = (120.0 / shadowDistance) * (shadowMapResolution / 2048.0)
 #define RSM_MAX_SAMPLES 12      // [4 8 12 16 20 24 28 32 36]  
 #define RSM_MIN_SAMPLES 4       // [4 8 12 16 20 24 28 32 36]  
 #define RSM_LEAK_FIX
+#define RSM_ADAPTIVE_SAMPLES
+#define RSM_SAMPLE_SCALE 1.0         // [0.5 0.75 1.0]
+#define RSM_SAMPLE_SCALE_LOW 0.5     // [0.25 0.5 0.75]
+#define RSM_LOOKDOWN_START 0.2       // [0.0 0.1 0.2 0.3 0.4]
+#define RSM_LOOKDOWN_END 0.6         // [0.3 0.4 0.5 0.6 0.7 0.8]
+#define RSM_OVERHEAD_CHECK_DIST 64.0 // [16.0 32.0 48.0 64.0 80.0 96.0 128.0]
+#define RSM_OVERHEAD_BIAS 0.0005     // [0.0 0.00025 0.0005 0.001 0.002]
 
 
 #define DENOISER_RADIUS 12.0     // [2.0 4.0 6.0 8.0 10.0 12.0 14.0 16.0 18.0 20.0]
@@ -402,6 +409,14 @@ const float ambientOcclusionLevel = 0.0;  // [0.0 0.05 0.2 0.4 0.6 0.8 1.0 1.2 1
 
 #define AO_TYPE GTAO            // [SSAO GTAO]
 #define AO_MULTI_BOUNCE
+
+#define AO_ADAPTIVE_SAMPLES
+#define AO_SAMPLE_SCALE 1.0         // [0.5 0.75 1.0]
+#define AO_SAMPLE_SCALE_LOW 0.5     // [0.25 0.5 0.75]
+#define AO_LOOKDOWN_START 0.2       // [0.0 0.1 0.2 0.3 0.4]
+#define AO_LOOKDOWN_END 0.6         // [0.3 0.4 0.5 0.6 0.7 0.8]
+#define AO_OVERHEAD_CHECK_DIST 64.0 // [16.0 32.0 48.0 64.0 80.0 96.0 128.0]
+#define AO_OVERHEAD_BIAS 0.0005     // [0.0 0.00025 0.0005 0.001 0.002]
 
 #define SSAO_SEARCH_RADIUS 3.0  // [0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0]
 #define SSAO_MAX_SAMPLES 12   // [4 8 12 16 20 24 28 32 36]

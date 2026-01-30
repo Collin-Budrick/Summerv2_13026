@@ -7,10 +7,14 @@ float SSAO(vec3 viewPos, vec3 normal){
     mat3 TBN = mat3(tangent, bitangent, normal);
 
     float N_SAMPLES = remapSaturate(length(viewPos), 0.0, 120.0, SSAO_MAX_SAMPLES, SSAO_MIN_SAMPLES);
+    #ifdef AO_ADAPTIVE_SAMPLES
+        float aoScale = getAoSampleScale();
+        N_SAMPLES = max(1.0, round(N_SAMPLES * aoScale));
+    #endif
     const float radius = SSAO_SEARCH_RADIUS;
 
     float ao = 0.0;
-    for(int i = 0; i < N_SAMPLES; ++i){
+    for(int i = 0; i < int(N_SAMPLES); ++i){
         vec3 offset = rand2_3(texcoord + sin(frameTimeCounter) + i);
         offset.xy = offset.xy * 2.0 - 1.0;
             float scale = float(i) / N_SAMPLES;
@@ -48,9 +52,14 @@ float SSAO(vec3 viewPos, vec3 normal){
 
 
 float HBAO(vec3 viewPos, vec3 normal){
-    const int N_SAMPLES = 64;
+    int N_SAMPLES = 64;
     float dist = length(viewPos);
     float radius = 0.75;
+
+    #ifdef AO_ADAPTIVE_SAMPLES
+        float aoScale = getAoSampleScale();
+        N_SAMPLES = max(1, int(round(float(N_SAMPLES) * aoScale)));
+    #endif
 
     float ao = 0.0;
     for(int i = 0; i < N_SAMPLES; ++i){
@@ -87,10 +96,16 @@ float HBAO(vec3 viewPos, vec3 normal){
 float GTAO(vec3 viewPos, vec3 normal, float dhTerrain){
     float rand = temporalBayer64(gl_FragCoord.xy);
     float dist = length(viewPos);
-    const int sliceCount = GTAO_SLICE_COUNT;
-    const int directionSampleCount = GTAO_DIRECTION_SAMPLE_COUNT;
+    int sliceCount = GTAO_SLICE_COUNT;
+    int directionSampleCount = GTAO_DIRECTION_SAMPLE_COUNT;
     float scaling = GTAO_SEARCH_RADIUS / dist;
     
+    #ifdef AO_ADAPTIVE_SAMPLES
+        float aoScale = getAoSampleScale();
+        sliceCount = max(1, int(round(float(sliceCount) * aoScale)));
+        directionSampleCount = max(1, int(round(float(directionSampleCount) * aoScale)));
+    #endif
+
     float visibility = 0.0;
     viewPos += normal * 0.05;
     vec3 viewV = normalize(-viewPos);

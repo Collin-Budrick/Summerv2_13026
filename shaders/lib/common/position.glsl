@@ -76,6 +76,56 @@ float getFogSampleScale(){
     #endif
 }
 
+float getRsmSampleScale(){
+    #ifdef RSM_ADAPTIVE_SAMPLES
+        float scaleHigh = RSM_SAMPLE_SCALE;
+        float scaleLow = RSM_SAMPLE_SCALE_LOW;
+        vec3 centerView = normalize(screenPosToViewPos(vec4(0.5, 0.5, 1.0, 1.0)).xyz);
+        float lookDown = smoothstep(RSM_LOOKDOWN_START, RSM_LOOKDOWN_END, -centerView.y);
+        float scale = mix(scaleHigh, scaleLow, lookDown);
+
+        vec3 upViewDir = normalize((gbufferModelView * vec4(upWorldDir, 0.0)).xyz);
+        if(upViewDir.z < -0.01){
+            vec4 upViewPos = vec4(upViewDir * RSM_OVERHEAD_CHECK_DIST, 1.0);
+            vec2 upUv = viewPosToScreenPos(upViewPos).xy;
+            if(!outScreen(upUv)){
+                float depth = texture(depthtex1, upUv).r;
+                float upZ = viewPosToScreenPos(upViewPos).z;
+                float blocked = step(depth, upZ - RSM_OVERHEAD_BIAS);
+                scale = mix(scale, scaleHigh, blocked);
+            }
+        }
+        return scale;
+    #else
+        return RSM_SAMPLE_SCALE;
+    #endif
+}
+
+float getAoSampleScale(){
+    #ifdef AO_ADAPTIVE_SAMPLES
+        float scaleHigh = AO_SAMPLE_SCALE;
+        float scaleLow = AO_SAMPLE_SCALE_LOW;
+        vec3 centerView = normalize(screenPosToViewPos(vec4(0.5, 0.5, 1.0, 1.0)).xyz);
+        float lookDown = smoothstep(AO_LOOKDOWN_START, AO_LOOKDOWN_END, -centerView.y);
+        float scale = mix(scaleHigh, scaleLow, lookDown);
+
+        vec3 upViewDir = normalize((gbufferModelView * vec4(upWorldDir, 0.0)).xyz);
+        if(upViewDir.z < -0.01){
+            vec4 upViewPos = vec4(upViewDir * AO_OVERHEAD_CHECK_DIST, 1.0);
+            vec2 upUv = viewPosToScreenPos(upViewPos).xy;
+            if(!outScreen(upUv)){
+                float depth = texture(depthtex1, upUv).r;
+                float upZ = viewPosToScreenPos(upViewPos).z;
+                float blocked = step(depth, upZ - AO_OVERHEAD_BIAS);
+                scale = mix(scale, scaleHigh, blocked);
+            }
+        }
+        return scale;
+    #else
+        return AO_SAMPLE_SCALE;
+    #endif
+}
+
 
 vec2 shadowDistort(vec2 sNDCPos){
     float sDist = length(sNDCPos.xy);

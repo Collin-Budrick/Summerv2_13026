@@ -9,6 +9,10 @@ vec3 RSM(vec4 p_worldPos, vec3 p_worldNormal, out vec3 mainDir){
 
     vec3 L = vec3(0.0); 
     int N_SAMPLES = int(remapSaturate(length(p_worldPos), 0.0, 120.0, RSM_MAX_SAMPLES, RSM_MIN_SAMPLES));
+    #ifdef RSM_ADAPTIVE_SAMPLES
+        float rsmScale = getRsmSampleScale();
+        N_SAMPLES = max(1, int(round(float(N_SAMPLES) * rsmScale)));
+    #endif
     const float radius = RSM_SEARCH_RADIUS * shadowMapScale / shadowMapResolution;
 
     float noise = temporalBayer64(gl_FragCoord.xy);
