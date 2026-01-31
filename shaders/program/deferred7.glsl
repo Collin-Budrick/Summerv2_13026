@@ -76,6 +76,9 @@ void main() {
 
 	vec3 L2 = BLACK;
 	vec3 ao = vec3(1.0);
+	vec3 tcltDbgRad = vec3(0.0);
+	float tcltDbgConf = 0.0;
+	vec3 tcltDbgColor = vec3(0.0);
 
 	#if defined DISTANT_HORIZONS && !defined NETHER && !defined END
 		bool isTerrain = skyB < 0.5;
@@ -179,7 +182,94 @@ void main() {
 
 
 
-		vec3 artificial = lightmap.x * artificial_color * (1. + GLOWING_BRIGHTNESS * glowingB) * diffuse;
+		vec3 artificialColor = artificial_color;
+		#ifdef TCLT_COLORED_LIGHTING
+			vec4 tclt = texture(colortex11, texcoord);
+			vec3 tcltRad = tclt.rgb * TCLT_STRENGTH;
+			float tcltConf = tclt.a;
+			vec3 tcltLocalRad = vec3(0.0);
+			float tcltLocalConf = 0.0;
+
+			if (tcltConf < 0.25) {
+				vec2 jitter = hash42(gl_FragCoord.xy).rg * 2.0 - 1.0;
+				vec2 step = invViewSize * mix(8.0, 48.0, saturate(lightmap.x * 1.2));
+
+				vec2 offsets[12];
+				offsets[0]  = vec2( 0.75,  0.25);
+				offsets[1]  = vec2(-0.25,  0.75);
+				offsets[2]  = vec2( 0.25, -0.75);
+				offsets[3]  = vec2(-0.75, -0.25);
+				offsets[4]  = vec2( 1.25,  0.0);
+				offsets[5]  = vec2(-1.25,  0.0);
+				offsets[6]  = vec2( 0.0,  1.25);
+				offsets[7]  = vec2( 0.0, -1.25);
+				offsets[8]  = vec2( 1.75,  0.75);
+				offsets[9]  = vec2(-1.75,  0.75);
+				offsets[10] = vec2( 0.75, -1.75);
+				offsets[11] = vec2(-0.75, -1.75);
+
+				vec3 bestColor = vec3(0.0);
+				float bestW = 0.0;
+				float depthLin = linearizeDepth(depth1);
+				const float blockIDRange = 0.3;
+
+				for (int i = 0; i < 12; ++i) {
+					vec2 uv = texcoord + (offsets[i] + jitter * 0.35) * step;
+					if (outScreen(uv)) continue;
+
+					float d = texture(depthtex1, uv).r;
+					if (d >= 1.0) continue;
+					float dLin = linearizeDepth(d);
+					if (abs(dLin - depthLin) > TCLT_DEPTH_TH) continue;
+
+					vec4 ct4 = texture(colortex4, uv);
+					vec2 ct4g = unpack16To2x8(ct4.g);
+					float bid = ct4g.x * ID_SCALE;
+					float glow = checkInRange(bid, GLOWING_BLOCK, blockIDRange) + checkInRange(bid, NO_ANISO, blockIDRange);
+
+					vec4 specS = unpack2x16To4x8(ct4.ba);
+					float em = specS.a;
+					if (em * 255.0 > 254.1) em = 0.0;
+
+					vec3 al = pow(texture(colortex0, uv).rgb, vec3(2.2));
+					vec2 lmS = texture(colortex5, uv).ba;
+					float bl = lmS.x;
+					float lum = getLuminance(al);
+					float chroma = max3(al.r, al.g, al.b) - min3(al.r, al.g, al.b);
+					float lumW = smoothstep(0.05, 0.6, lum);
+					float chromaW = smoothstep(0.05, 0.35, chroma);
+
+					float src = max(em * 2.0, glow * 1.5);
+					float chromaSrc = bl * chromaW * 0.5;
+					float weight = max(src, chromaSrc) * smoothstep(0.05, 0.8, bl);
+					if (weight <= 0.01) continue;
+
+					if (weight > bestW) {
+						bestW = weight;
+						bestColor = al;
+					}
+				}
+
+				vec3 localRad = bestColor * bestW * TCLT_EMISSIVE_GAIN;
+				tcltLocalRad = localRad;
+				tcltLocalConf = saturate(bestW * 2.5);
+				tcltRad = mix(localRad, tcltRad, tcltConf) * TCLT_STRENGTH;
+				tcltConf = max(tcltConf, tcltLocalConf);
+			}
+			float tcltMax = max3(tcltRad.r, tcltRad.g, tcltRad.b);
+			vec3 tcltColor = tcltMax > 1e-4 ? (tcltRad / tcltMax) : vec3(1.0);
+			float tcltW = saturate(max(tcltConf, getLuminance(tcltRad) * 2.0)) * saturate(lightmap.x * 1.2);
+			artificialColor = mix(artificialColor, tcltColor, tcltW * TCLT_TINT_STRENGTH);
+
+			vec3 tcltGI = tcltRad * BRDF_D * TCLT_GI_STRENGTH;
+			tcltGI *= localLightShadow(viewPos1.xyz, normalV, lightmap.x);
+			L2 += tcltGI;
+
+			tcltDbgRad = tcltRad;
+			tcltDbgConf = max(tcltConf, tcltLocalConf);
+			tcltDbgColor = tcltColor;
+		#endif
+		vec3 artificial = lightmap.x * artificialColor * (1. + GLOWING_BRIGHTNESS * glowingB) * diffuse;
 		artificial += saturate(materialParams.emissiveness - lightmap.x) * diffuse * EMISSIVENESS_BRIGHTNESS;
 		artificial *= localLightShadow(viewPos1.xyz, normalV, lightmap.x);
 		
@@ -272,6 +362,15 @@ void main() {
 	}
 	
 	color.rgb = max(BLACK, color.rgb);
+	#if DEBUG_TCLT == 1
+		color.rgb = tcltDbgRad * 4.0 + vec3(tcltDbgConf);
+	#elif DEBUG_TCLT == 2
+		color.rgb = tcltDbgRad;
+	#elif DEBUG_TCLT == 3
+		color.rgb = tcltDbgColor;
+	#elif DEBUG_TCLT == 4
+		color.rgb = vec3(1.0, 0.0, 1.0);
+	#endif
 	// color.rgb = vec3(1.0 - texture(colortex3, texcoord * 0.5).a);
 	
 	// if(dhTerrain > 0.5) color.rgb = vec3(1.0 - texture(colortex1, texcoord * 0.5).a);

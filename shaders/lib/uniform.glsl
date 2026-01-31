@@ -36,6 +36,7 @@ uniform sampler2D colortex7;
 
 uniform sampler2D colortex9;
 uniform sampler2D colortex10;
+uniform sampler2D colortex11;
 
 uniform sampler2DShadow shadowtex0;
 uniform sampler2D shadowtex1;
